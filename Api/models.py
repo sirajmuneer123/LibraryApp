@@ -5,6 +5,8 @@ from django.contrib.auth.models import User
 
 
 class Book(models.Model):
+    """ Model for hold book details in the library
+    """
     title = models.CharField(max_length=128)
     author = models.CharField(max_length=128)
     book_code = models.CharField(max_length=36, unique=True)
@@ -19,6 +21,8 @@ class Book(models.Model):
 
 
 class Order(models.Model):
+    """ Model for hold book rquest and return
+    """
     order_status = (
         ('1', 'placed'),
         ('2', 'returned'),
@@ -40,6 +44,8 @@ class Order(models.Model):
 
 
 class TimePeriod(models.Model):
+    """ Model for hold Library app open time 
+    """
     start_time = models.TimeField()
     end_time = models.TimeField()
 
@@ -54,7 +60,8 @@ class TimePeriod(models.Model):
 
 class UserPermissions(models.Model):
     """
-    user permission model
+        user permission model, staff add book permisssion 
+        for purticular staff
     """
     name = models.CharField(max_length=100, default="UserPermissions")
 
