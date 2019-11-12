@@ -5,7 +5,7 @@
 * clone repo
 * create virtual environment 
     ``` javascript
-        $> virtualenv <folder_name> -p python3
+        $> virtualenv -p python3 <folder_name> 
         $> cd <folder_name>
         $> source bin/activate
     ```
