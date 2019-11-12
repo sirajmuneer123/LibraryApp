@@ -223,3 +223,17 @@ class BookListAPIView(generics.ListAPIView):
     
     def get_queryset(self):
         return Book.objects.all()
+
+
+
+
+
+# Using the standard RequestFactory API to create a form POST request
+from rest_framework.test import APIRequestFactory
+
+
+factory = APIRequestFactory()
+request = factory.post('/api/book-create/', {
+    "title":"klda", "author": "book", "book_code": "sdfddsd",
+    "total_copies" :"7", "available_copies":"3"}, format='json')
+print("test rsult", request)
