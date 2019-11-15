@@ -19,6 +19,7 @@ from rest_framework.permissions import (
 from rest_framework_jwt.settings import api_settings
 jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
 jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
+from rest_framework_simplejwt.tokens import RefreshToken
 
 # import django exception modules and datetime
 from django.core.exceptions import ObjectDoesNotExist
@@ -28,7 +29,7 @@ import datetime
 
 #import model classes
 from django.contrib.auth import authenticate
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from Api.models import Book, Order, TimePeriod
 from django.contrib.auth.models import Permission
 
@@ -57,7 +58,7 @@ class Login(APIView):
         if not user:
             return Response({'status': 'failed','error': 'Invalid Credentials'},
                             status=HTTP_404_NOT_FOUND)
-        elif django_user.groups.filter(name = 'user').exists():
+        elif user.groups.filter(name = 'user').exists():
             try:
                 set_time = TimePeriod.objects.last()
                 if not set_time.start_time <= datetime.datetime.now().time() < set_time.end_time:
@@ -66,10 +67,9 @@ class Login(APIView):
                 return Response({'status': 'failed', 'error': 'Please Set time period'})
 
         serializer = UserSerializer(user)
-        payload = jwt_payload_handler(user)
-        token = jwt_encode_handler(payload)
-        return Response({'token': token, 'data': serializer.data},
-                        status=HTTP_200_OK)
+        refresh = RefreshToken.for_user(user)
+        return Response({'token': str(refresh.access_token), 'refresh': str(refresh),
+            'data': serializer.data}, status=HTTP_200_OK)
 
 
 
@@ -130,7 +130,7 @@ class CreateUserView(APIView):
                 if group_name:
                     grp, created = Group.objects.get_or_create(
                         name=group_name)
-                    user_obj.groups.add(g)
+                    user_obj.groups.add(grp)
                     
             return Response({'status': 'success', 'msg': 'User Created Successfully'})
 
@@ -179,8 +179,8 @@ class OrderCreate(APIView):
     def post(self, request, format=None):
         with transaction.atomic():
             order_data = request.data
-            book = Book.objects.filter(book_id=order_data.get('book_id'))
-            if book.available_copies > 0:
+            book = Book.objects.get(id=order_data.get('book_id'))
+            if book.available_copies <= 0:
                 return Response({'status': 'error', 'error': 'This book is not available'})
             else:
                 order_obj = Order.objects.create(
@@ -205,7 +205,7 @@ class AddPermission(APIView):
         data = request.data
         permission = Permission.objects.get(id=data.get('permission_id'))
         user = User.objects.get(id=data.get('user_id')) 
-        user.user_permissions.add(Permission)
+        user.user_permissions.add(permission)
         return Response({'status': 'success', 'msg': 'successfully added'})
 
 
@@ -223,6 +223,7 @@ class BookListAPIView(generics.ListAPIView):
     
     def get_queryset(self):
         return Book.objects.all()
+
 
 
 
